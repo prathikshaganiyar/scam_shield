@@ -1,0 +1,30 @@
+name: scam_shield
+description: "Detects job scam patterns in messages, links, and postings before you respond."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  shared_preferences: ^2.2.3   # local scan history storage
+  receive_sharing_intent: ^1.8.0  # WhatsApp/Telegram "share to app" support (wire up in v1.1)
+  url_launcher: ^6.3.0
+  intl: ^0.19.0
+  firebase_core: ^3.6.0
+  cloud_firestore: ^5.4.4
+  firebase_auth: ^5.3.1   # anonymous auth so writes aren't fully unauthenticated
+  http: ^1.6.0
+  image_picker: ^1.1.2
+  google_mlkit_text_recognition: ^0.13.1   # on-device, free OCR
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

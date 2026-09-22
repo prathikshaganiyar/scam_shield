@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /fraud_reports/{reportId} {
+      // Anyone can read reports — the whole point is public lookup.
+      allow read: if true;
+
+      // Only signed-in (including anonymous) users can write, and only
+      // if the document shape looks correct. This is a starting point,
+      // not a full anti-abuse system — see README "Known limitations".
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasAll(['type', 'normalizedIdentifier', 'category', 'reportedAt'])
+        && request.resource.data.type in ['upi', 'phone']
+        && request.resource.data.normalizedIdentifier is string
+        && request.resource.data.normalizedIdentifier.size() > 3
+        && request.resource.data.normalizedIdentifier.size() < 100;
+
+      // Reports are immutable once submitted — no edits or deletes from
+      // the client. Moderation happens server-side (Cloud Function/admin
+      // console), not from the app.
+      allow update, delete: if false;
+    }
+  }
+}
