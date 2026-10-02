@@ -1,14 +1,15 @@
 from pathlib import Path
 
 import joblib
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from explain import get_scam_reasons, get_risk_level
-from url_analyzer import analyze_url
-from risk_engine import calculate_final_risk
-from url_extractor import extract_urls
+from .explain import get_scam_reasons
+from .url_analyzer import analyze_url
+from .risk_engine import calculate_final_risk
+from .url_extractor import extract_urls
+
 
 app = FastAPI(
     title="ScamShield API",
@@ -37,6 +38,7 @@ MODEL_PATH = (
     / "model"
     / "scam_classifier.joblib"
 )
+
 
 model = joblib.load(MODEL_PATH)
 
@@ -72,13 +74,14 @@ def predict(request: ScanRequest):
     legitimate_probability = float(probabilities[0])
     scam_probability = float(probabilities[1])
 
-    prediction = "scam" if scam_probability >= 0.5 else "legitimate"
+    prediction = (
+        "scam"
+        if scam_probability >= 0.5
+        else "legitimate"
+    )
 
     reasons = get_scam_reasons(request.text)
 
-    # ---------------------------------------------------------
-    # Analyze URLs found inside the message
-    # ---------------------------------------------------------
     urls = extract_urls(request.text)
 
     url_results = []
@@ -90,15 +93,14 @@ def predict(request: ScanRequest):
         except ValueError:
             continue
 
-    # Use the highest URL risk score when multiple URLs exist.
     highest_url_risk = max(
-        (result["risk_score"] for result in url_results),
+        (
+            result["risk_score"]
+            for result in url_results
+        ),
         default=0,
     )
 
-    # ---------------------------------------------------------
-    # Unified risk calculation
-    # ---------------------------------------------------------
     risk_result = calculate_final_risk(
         scam_probability=scam_probability,
         rule_reason_count=len(reasons),
@@ -115,3 +117,15 @@ def predict(request: ScanRequest):
         "reasons": reasons,
         "urls": url_results,
     }
+
+
+@app.post("/analyze-url")
+def analyze_url_endpoint(request: URLRequest):
+    try:
+        return analyze_url(request.url)
+
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )

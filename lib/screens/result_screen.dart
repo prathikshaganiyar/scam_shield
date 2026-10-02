@@ -840,9 +840,10 @@ const SizedBox(height: 24),
                   ),
                   const SizedBox(height: 4),
 Text(
-  flag.title,
-  style: const TextStyle(
-    color: Colors.grey,
+  flag.explanation,
+  style: TextStyle(
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+    height: 1.4,
   ),
 ),
                 ],
